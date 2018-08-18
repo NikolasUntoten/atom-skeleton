@@ -3,11 +3,15 @@ using System.Numerics;
 
 namespace atom_skeleton {
 	class Atom2D {
-		public const float MINIMUM_FORCE = 0;
+		public const float MINIMUM_FORCE = 0.001f;
+		public const float SET_DISTANCE = 0.1f;
+		public const float K = 1f;
 
-		public Vector2 position;
-		public Vector2 velocity;
-		public float rotation;
+		private Atom2D[] Connected;
+
+		public Vector2 Position;
+		public Vector2 Velocity;
+		public float Rotation;
 
 		public Atom2D(Vector2 initPosition, Vector2 initVelocity, float initRotation) {
 			Setup(initPosition, initVelocity, initRotation);
@@ -24,33 +28,44 @@ namespace atom_skeleton {
 		}
 
 		private void Setup(Vector2 initPosition, Vector2 initVelocity, float initRotation) {
-			position = initPosition;
-			velocity = initVelocity;
-			rotation = initRotation;
+			Position = initPosition;
+			Velocity = initVelocity;
+			Rotation = initRotation;
+			Connected = new Atom2D[0];
+		}
+
+		public void ConnectAtom(Atom2D atom) {
+			Atom2D[] tempArr = new Atom2D[Connected.Length + 1];
+			for (int i = 0; i < Connected.Length; i++) {
+				tempArr[i] = Connected[i];
+			}
+			tempArr[Connected.Length] = atom;
+			Connected = tempArr;
 		}
 
 		public void Push(float force, float direction) {
-			velocity.X += force * (float) Math.Sin(direction);
-			velocity.Y += force * (float) Math.Cos(direction);
+			Velocity.X += force * (float) Math.Sin(direction);
+			Velocity.Y += force * (float) Math.Cos(direction);
 		}
 
 		public void UpdatePosition(Atom2D[] atoms) {
-			position.X += velocity.X * 0.00001f;
-			position.Y += velocity.Y * 0.00001f;
+			Position.X += Velocity.X * 0.001f;
+			Position.Y += Velocity.Y * 0.001f;
+			Push(-Velocity.Length()*0.01f, (float) Math.Atan2(Velocity.X, Velocity.Y));
 		}
 
-		public void UpdateForces(Atom2D[] atoms) {
-			foreach (Atom2D atom in atoms) {
-				if (this != atom) {
-					float xDist = atom.position.X - position.X;
-					float yDist = atom.position.Y - position.Y;
-					float direction = (float)Math.Atan2(yDist, xDist);
-					float power = 1 / Vector2.DistanceSquared(atom.position, position);
-					power *= (int) (new Random().NextDouble()*2)*2 - 1;
+		public void UpdateForces() {
+			foreach (Atom2D atom in Connected) {
+				float xDist = atom.Position.X - Position.X;
+				float yDist = atom.Position.Y - Position.Y;
+				float direction = (float)Math.Atan2(xDist, yDist);
 
-					if (power >= MINIMUM_FORCE) {
-						atom.Push(power, direction);
-					}
+				float distance = Vector2.Distance(Position, atom.Position);
+				distance = Math.Abs(distance);
+				float power = K * (SET_DISTANCE - distance);
+				
+				if (Math.Abs(power) >= MINIMUM_FORCE) {
+					atom.Push(power, direction);
 				}
 			}
 		}

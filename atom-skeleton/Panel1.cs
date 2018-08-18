@@ -11,8 +11,8 @@ using System.Drawing;
 namespace atom_skeleton {
 	class Panel1 : Panel {
 
-		const int WIDTH = 100;
-		const int HEIGHT = 100;
+		const int WIDTH = 500;
+		const int HEIGHT = 500;
 
 		private BackgroundWorker bgWorker;
 
@@ -21,6 +21,9 @@ namespace atom_skeleton {
 		private Bitmap buffer;
 
 		public Panel1() {
+
+			this.Width = WIDTH;
+			this.Height = HEIGHT;
 
 			InitializeAtoms();
 			InitializeWorker();
@@ -36,6 +39,18 @@ namespace atom_skeleton {
 					(float)rand.NextDouble(), (float)rand.NextDouble(),
 					0f, 0f, (float)rand.NextDouble());
 			}
+
+			foreach (Atom2D atom in atoms) {
+				Connect(atom, atoms[rand.Next(0, atoms.Length)]);
+				Connect(atom, atoms[rand.Next(0, atoms.Length)]);
+				Connect(atom, atoms[rand.Next(0, atoms.Length)]);
+			}
+		}
+
+		private void Connect(Atom2D a1, Atom2D a2) {
+			if (a1 == a2) return;
+			a1.ConnectAtom(a2);
+			a2.ConnectAtom(a1);
 		}
 
 		private void InitializeWorker() {
@@ -58,8 +73,8 @@ namespace atom_skeleton {
 			InitializeBuffer();
 
 			foreach (Atom2D atom in atoms) {
-				int x = (int)(atom.position.X * 100);
-				int y = (int)(atom.position.Y * 100);
+				int x = (int)(atom.Position.X * WIDTH);
+				int y = (int)(atom.Position.Y * HEIGHT);
 
 				for (int i = 0; i < 10; i++) {
 					for (int j = 0; j < 10; j++) {
@@ -80,7 +95,7 @@ namespace atom_skeleton {
 					atom.UpdatePosition(atoms);
 				}
 				foreach (Atom2D atom in atoms) {
-					atom.UpdateForces(atoms);
+					atom.UpdateForces();
 				}
 
 				DrawAtomsToBuffer();
@@ -89,7 +104,7 @@ namespace atom_skeleton {
 					Refresh();
 				});
 
-				Thread.Sleep(50);
+				Thread.Sleep(20);
 			}
 		}
 	}
